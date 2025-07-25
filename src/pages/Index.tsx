@@ -1,5 +1,7 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
+import { useStats } from '@/hooks/useStats';
 import Navbar from '@/components/Layout/Navbar';
 import StatsCard from '@/components/Dashboard/StatsCard';
 import { Button } from '@/components/ui/button';
@@ -19,7 +21,11 @@ import {
 } from 'lucide-react';
 
 const Index = () => {
-  const { data: profile, isLoading } = useProfile();
+  const navigate = useNavigate();
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const { data: stats, isLoading: statsLoading } = useStats();
+
+  const isLoading = profileLoading || statsLoading;
 
   if (isLoading) {
     return (
@@ -67,9 +73,10 @@ const Index = () => {
           />
           <StatsCard
             title="Practice Sessions"
-            value="0"
+            value={stats?.todaySessions || 0}
             description="Questions attempted today"
             icon={BookOpen}
+            trend={stats?.totalSessions ? { value: stats.totalSessions, isPositive: true } : undefined}
           />
         </div>
 
@@ -87,20 +94,38 @@ const Index = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-3 gap-2">
-                <Button size="sm" variant="outline" className="flex items-center gap-1">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex items-center gap-1"
+                  onClick={() => navigate('/practice?difficulty=easy')}
+                >
                   <span className="w-2 h-2 rounded-full bg-green-500"></span>
                   Easy
                 </Button>
-                <Button size="sm" variant="outline" className="flex items-center gap-1">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex items-center gap-1"
+                  onClick={() => navigate('/practice?difficulty=medium')}
+                >
                   <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
                   Medium
                 </Button>
-                <Button size="sm" variant="outline" className="flex items-center gap-1">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex items-center gap-1"
+                  onClick={() => navigate('/practice?difficulty=hard')}
+                >
                   <span className="w-2 h-2 rounded-full bg-red-500"></span>
                   Hard
                 </Button>
               </div>
-              <Button className="w-full bg-gradient-primary hover:opacity-90">
+              <Button 
+                className="w-full bg-gradient-primary hover:opacity-90"
+                onClick={() => navigate('/practice')}
+              >
                 Start Random Practice
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
@@ -152,26 +177,35 @@ const Index = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex flex-col items-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition-smooth"
+                onClick={() => navigate('/practice?subject=physics')}
               >
                 <div className="text-2xl">⚛️</div>
                 <span className="font-medium">Physics</span>
-                <span className="text-xs text-muted-foreground">Mechanics, Optics, Modern Physics</span>
+                <span className="text-xs text-muted-foreground">
+                  {stats?.subjectBreakdown.physics || 0} practiced
+                </span>
               </Button>
               <Button 
                 variant="outline" 
                 className="h-20 flex flex-col items-center gap-2 hover:bg-green-50 hover:border-green-200 transition-smooth"
+                onClick={() => navigate('/practice?subject=chemistry')}
               >
                 <div className="text-2xl">🧪</div>
                 <span className="font-medium">Chemistry</span>
-                <span className="text-xs text-muted-foreground">Organic, Inorganic, Physical</span>
+                <span className="text-xs text-muted-foreground">
+                  {stats?.subjectBreakdown.chemistry || 0} practiced
+                </span>
               </Button>
               <Button 
                 variant="outline" 
                 className="h-20 flex flex-col items-center gap-2 hover:bg-purple-50 hover:border-purple-200 transition-smooth"
+                onClick={() => navigate('/practice?subject=mathematics')}
               >
                 <div className="text-2xl">📐</div>
                 <span className="font-medium">Mathematics</span>
-                <span className="text-xs text-muted-foreground">Calculus, Algebra, Geometry</span>
+                <span className="text-xs text-muted-foreground">
+                  {stats?.subjectBreakdown.mathematics || 0} practiced
+                </span>
               </Button>
             </div>
           </CardContent>

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { BookOpen, GraduationCap, Trophy } from 'lucide-react';
+import codingMonitor from '@/assets/coding-monitor.jpg';
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
@@ -136,14 +137,22 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 relative"
+      style={{
+        backgroundImage: `linear-gradient(rgba(59, 130, 246, 0.85), rgba(59, 130, 246, 0.85)), url(${codingMonitor})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <BookOpen className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold text-gradient">JEEPrep.tech</h1>
+            <BookOpen className="h-8 w-8 text-white" />
+            <h1 className="text-3xl font-bold text-white">JEEPrep.tech</h1>
           </div>
-          <p className="text-muted-foreground">Master JEE with smart practice and rewards</p>
+          <p className="text-white/90 font-medium">Master JEE with smart practice and rewards</p>
         </div>
 
         <Card className="shadow-glow border-0">

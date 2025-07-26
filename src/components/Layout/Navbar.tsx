@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { BookOpen, LogOut, Settings, Trophy, User } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
@@ -30,10 +30,10 @@ const Navbar = () => {
     <nav className="border-b bg-card shadow-subtle">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <BookOpen className="h-8 w-8 text-primary" />
             <h1 className="text-2xl font-bold text-gradient">JEEPrep.tech</h1>
-          </div>
+          </Link>
 
           <div className="flex items-center gap-4">
             <DropdownMenu>

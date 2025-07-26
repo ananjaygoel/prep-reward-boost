@@ -3,8 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Practice from "./pages/Practice";
@@ -12,6 +13,20 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Achievements from "./pages/Achievements";
 import NotFound from "./pages/NotFound";
+
+const HomeRoute = () => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  return user ? <Index /> : <Landing />;
+};
 
 const queryClient = new QueryClient();
 
@@ -24,11 +39,8 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={
-              <ProtectedRoute>
-                <Index />
-              </ProtectedRoute>
-            } />
+            <Route path="/landing" element={<Landing />} />
+            <Route path="/" element={<HomeRoute />} />
             <Route path="/practice" element={
               <ProtectedRoute>
                 <Practice />

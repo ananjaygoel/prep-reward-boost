@@ -10,11 +10,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { BookOpen, LogOut, Settings, Trophy, User } from 'lucide-react';
+import { BookOpen, LogOut, Settings, Trophy, User, Shield } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useUserRoles } from '@/hooks/useUserRoles';
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useUserRoles();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -71,6 +73,12 @@ const Navbar = () => {
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => navigate('/admin')}>
+                    <Shield className="mr-2 h-4 w-4" />
+                    <span>Admin Panel</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />

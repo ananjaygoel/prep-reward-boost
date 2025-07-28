@@ -14,6 +14,192 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_insights: {
+        Row: {
+          created_at: string
+          data: Json | null
+          description: string
+          expires_at: string | null
+          id: string
+          insight_type: string
+          is_acknowledged: boolean
+          priority: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          description: string
+          expires_at?: string | null
+          id?: string
+          insight_type: string
+          is_acknowledged?: boolean
+          priority?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          description?: string
+          expires_at?: string | null
+          id?: string
+          insight_type?: string
+          is_acknowledged?: boolean
+          priority?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_study_goals: {
+        Row: {
+          completed_questions: number
+          created_at: string
+          date: string
+          id: string
+          is_completed: boolean
+          study_plan_id: string
+          subjects_focus: Json
+          target_questions: number
+          target_time_minutes: number
+          time_spent_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          completed_questions?: number
+          created_at?: string
+          date: string
+          id?: string
+          is_completed?: boolean
+          study_plan_id: string
+          subjects_focus?: Json
+          target_questions?: number
+          target_time_minutes?: number
+          time_spent_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          completed_questions?: number
+          created_at?: string
+          date?: string
+          id?: string
+          is_completed?: boolean
+          study_plan_id?: string
+          subjects_focus?: Json
+          target_questions?: number
+          target_time_minutes?: number
+          time_spent_minutes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      mock_test_sessions: {
+        Row: {
+          accuracy_percentage: number | null
+          created_at: string
+          end_time: string | null
+          id: string
+          mock_test_id: string
+          percentile: number | null
+          questions: Json
+          rank: number | null
+          start_time: string
+          status: string
+          subject_scores: Json | null
+          time_spent_seconds: number | null
+          total_score: number | null
+          updated_at: string
+          user_answers: Json
+          user_id: string
+        }
+        Insert: {
+          accuracy_percentage?: number | null
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          mock_test_id: string
+          percentile?: number | null
+          questions: Json
+          rank?: number | null
+          start_time?: string
+          status?: string
+          subject_scores?: Json | null
+          time_spent_seconds?: number | null
+          total_score?: number | null
+          updated_at?: string
+          user_answers?: Json
+          user_id: string
+        }
+        Update: {
+          accuracy_percentage?: number | null
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          mock_test_id?: string
+          percentile?: number | null
+          questions?: Json
+          rank?: number | null
+          start_time?: string
+          status?: string
+          subject_scores?: Json | null
+          time_spent_seconds?: number | null
+          total_score?: number | null
+          updated_at?: string
+          user_answers?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mock_tests: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          difficulty_distribution: Json
+          duration_minutes: number
+          id: string
+          is_active: boolean
+          is_full_length: boolean
+          question_distribution: Json
+          syllabus_coverage: Json | null
+          title: string
+          total_marks: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty_distribution: Json
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          is_full_length?: boolean
+          question_distribution: Json
+          syllabus_coverage?: Json | null
+          title: string
+          total_marks?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty_distribution?: Json
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          is_full_length?: boolean
+          question_distribution?: Json
+          syllabus_coverage?: Json | null
+          title?: string
+          total_marks?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       practice_sessions: {
         Row: {
           attempted_at: string
@@ -189,6 +375,57 @@ export type Database = {
         }
         Relationships: []
       }
+      study_plans: {
+        Row: {
+          ai_recommendations: Json | null
+          completion_percentage: number
+          created_at: string
+          current_week: number
+          description: string | null
+          difficulty_level: string
+          id: string
+          is_active: boolean
+          subjects: Json
+          target_exam_date: string | null
+          title: string
+          total_weeks: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_recommendations?: Json | null
+          completion_percentage?: number
+          created_at?: string
+          current_week?: number
+          description?: string | null
+          difficulty_level: string
+          id?: string
+          is_active?: boolean
+          subjects?: Json
+          target_exam_date?: string | null
+          title: string
+          total_weeks?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_recommendations?: Json | null
+          completion_percentage?: number
+          created_at?: string
+          current_week?: number
+          description?: string | null
+          difficulty_level?: string
+          id?: string
+          is_active?: boolean
+          subjects?: Json
+          target_exam_date?: string | null
+          title?: string
+          total_weeks?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subjects: {
         Row: {
           code: Database["public"]["Enums"]["subject_type"]
@@ -248,6 +485,57 @@ export type Database = {
           },
         ]
       }
+      user_analytics: {
+        Row: {
+          created_at: string
+          date: string
+          difficulty_performance: Json
+          id: string
+          peak_performance_time: string | null
+          questions_attempted: number
+          questions_correct: number
+          strong_topics: Json
+          study_streak: number
+          subjects_practiced: Json
+          time_spent_minutes: number
+          updated_at: string
+          user_id: string
+          weak_topics: Json
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          difficulty_performance?: Json
+          id?: string
+          peak_performance_time?: string | null
+          questions_attempted?: number
+          questions_correct?: number
+          strong_topics?: Json
+          study_streak?: number
+          subjects_practiced?: Json
+          time_spent_minutes?: number
+          updated_at?: string
+          user_id: string
+          weak_topics?: Json
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          difficulty_performance?: Json
+          id?: string
+          peak_performance_time?: string | null
+          questions_attempted?: number
+          questions_correct?: number
+          strong_topics?: Json
+          study_streak?: number
+          subjects_practiced?: Json
+          time_spent_minutes?: number
+          updated_at?: string
+          user_id?: string
+          weak_topics?: Json
+        }
+        Relationships: []
+      }
       user_rewards: {
         Row: {
           earned_at: string
@@ -306,6 +594,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_study_recommendations: {
+        Args: { target_user_id: string }
+        Returns: {
+          recommendation_type: string
+          title: string
+          description: string
+          priority: string
+        }[]
+      }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]

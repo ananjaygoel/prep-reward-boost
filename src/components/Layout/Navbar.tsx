@@ -37,6 +37,18 @@ const Navbar = () => {
             <h1 className="text-2xl font-bold text-gradient">JEEPrep.tech</h1>
           </Link>
 
+          <div className="flex items-center gap-6">
+            <Link to="/study-plans" className="text-sm font-medium transition-colors hover:text-primary">
+              Study Plans
+            </Link>
+            <Link to="/analytics" className="text-sm font-medium transition-colors hover:text-primary">
+              Analytics
+            </Link>
+            <Link to="/mock-tests" className="text-sm font-medium transition-colors hover:text-primary">
+              Mock Tests
+            </Link>
+          </div>
+
           <div className="flex items-center gap-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

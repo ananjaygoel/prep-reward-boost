@@ -14,6 +14,9 @@ import Settings from "./pages/Settings";
 import Achievements from "./pages/Achievements";
 import Admin from "./pages/Admin";
 import InternPortal from "./pages/InternPortal";
+import StudyPlans from "./pages/StudyPlans";
+import Analytics from "./pages/Analytics";
+import MockTests from "./pages/MockTests";
 import NotFound from "./pages/NotFound";
 
 const HomeRoute = () => {
@@ -71,6 +74,21 @@ const App = () => (
             <Route path="/intern" element={
               <ProtectedRoute>
                 <InternPortal />
+              </ProtectedRoute>
+            } />
+            <Route path="/study-plans" element={
+              <ProtectedRoute>
+                <StudyPlans />
+              </ProtectedRoute>
+            } />
+            <Route path="/analytics" element={
+              <ProtectedRoute>
+                <Analytics />
+              </ProtectedRoute>
+            } />
+            <Route path="/mock-tests" element={
+              <ProtectedRoute>
+                <MockTests />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

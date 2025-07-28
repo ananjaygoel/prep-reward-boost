@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Achievements from "./pages/Achievements";
 import Admin from "./pages/Admin";
+import InternPortal from "./pages/InternPortal";
 import NotFound from "./pages/NotFound";
 
 const HomeRoute = () => {
@@ -65,6 +66,11 @@ const App = () => (
             <Route path="/admin" element={
               <ProtectedRoute>
                 <Admin />
+              </ProtectedRoute>
+            } />
+            <Route path="/intern" element={
+              <ProtectedRoute>
+                <InternPortal />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

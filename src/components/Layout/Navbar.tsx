@@ -16,7 +16,7 @@ import { useUserRoles } from '@/hooks/useUserRoles';
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
-  const { isAdmin } = useUserRoles();
+  const { isAdmin, isContentCreator } = useUserRoles();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -77,6 +77,12 @@ const Navbar = () => {
                   <DropdownMenuItem onClick={() => navigate('/admin')}>
                     <Shield className="mr-2 h-4 w-4" />
                     <span>Admin Panel</span>
+                  </DropdownMenuItem>
+                )}
+                {isContentCreator && (
+                  <DropdownMenuItem onClick={() => navigate('/intern')}>
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    <span>Intern Portal</span>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />

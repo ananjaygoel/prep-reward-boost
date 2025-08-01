@@ -2,8 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { useStats } from '@/hooks/useStats';
+import { useUserLevel, useDailyChallenge, useUserChallengeProgress } from '@/hooks/useGamification';
 import Navbar from '@/components/Layout/Navbar';
 import StatsCard from '@/components/Dashboard/StatsCard';
+import { LevelDisplay } from '@/components/Gamification/LevelDisplay';
+import { DailyChallengeCard } from '@/components/Gamification/DailyChallengeCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +27,9 @@ const Index = () => {
   const navigate = useNavigate();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: stats, isLoading: statsLoading } = useStats();
+  const { data: userLevel } = useUserLevel();
+  const { data: dailyChallenge } = useDailyChallenge();
+  const { data: challengeProgress } = useUserChallengeProgress();
 
   const isLoading = profileLoading || statsLoading;
 
@@ -78,6 +84,20 @@ const Index = () => {
             icon={BookOpen}
             trend={stats?.totalSessions ? { value: stats.totalSessions, isPositive: true } : undefined}
           />
+        </div>
+
+        {/* Gamification Section */}
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
+          {userLevel && (
+            <LevelDisplay userLevel={userLevel} />
+          )}
+          
+          {dailyChallenge && (
+            <DailyChallengeCard 
+              challenge={dailyChallenge} 
+              progress={challengeProgress || undefined} 
+            />
+          )}
         </div>
 
         {/* Quick Actions */}

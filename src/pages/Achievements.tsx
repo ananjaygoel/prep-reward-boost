@@ -1,258 +1,156 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Layout/Navbar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { AchievementCard } from '@/components/Gamification/AchievementCard';
+import { LevelDisplay } from '@/components/Gamification/LevelDisplay';
+import { DailyChallengeCard } from '@/components/Gamification/DailyChallengeCard';
+import { LeaderboardCard } from '@/components/Gamification/LeaderboardCard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Trophy, Target, BookOpen, Flame, Clock } from 'lucide-react';
 import { 
-  Trophy, 
-  Star, 
-  Target, 
-  Zap, 
-  Calendar,
-  Award,
-  Medal,
-  Crown
-} from 'lucide-react';
+  useAchievements, 
+  useUserAchievements, 
+  useUserLevel,
+  useDailyChallenge,
+  useUserChallengeProgress
+} from '@/hooks/useGamification';
 
-const Achievements = () => {
-  const { user } = useAuth();
-  
-  // Fetch user rewards
-  const { data: userRewards } = useQuery({
-    queryKey: ['user-rewards', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from('user_rewards')
-        .select(`
-          *,
-          reward:rewards(*)
-        `)
-        .eq('user_id', user.id)
-        .order('earned_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
+const categoryIcons = {
+  practice: BookOpen,
+  streak: Flame,
+  accuracy: Target,
+  speed: Clock,
+  social: Trophy,
+};
 
-  // Fetch all available rewards
-  const { data: allRewards } = useQuery({
-    queryKey: ['all-rewards'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('rewards')
-        .select('*')
-        .eq('is_active', true)
-        .order('condition_value');
-      
-      if (error) throw error;
-      return data;
-    },
-  });
+export const Achievements = () => {
+  const { data: achievements, isLoading: achievementsLoading } = useAchievements();
+  const { data: userAchievements, isLoading: userAchievementsLoading } = useUserAchievements();
+  const { data: userLevel, isLoading: levelLoading } = useUserLevel();
+  const { data: dailyChallenge } = useDailyChallenge();
+  const { data: challengeProgress } = useUserChallengeProgress();
 
-  const earnedRewardIds = userRewards?.map(ur => ur.reward_id) || [];
-  const unlockedRewards = allRewards?.filter(reward => earnedRewardIds.includes(reward.id)) || [];
-  const lockedRewards = allRewards?.filter(reward => !earnedRewardIds.includes(reward.id)) || [];
-
-  const getRewardIcon = (rewardName: string) => {
-    if (rewardName.toLowerCase().includes('first')) return <Star className="h-6 w-6" />;
-    if (rewardName.toLowerCase().includes('streak')) return <Zap className="h-6 w-6" />;
-    if (rewardName.toLowerCase().includes('master')) return <Crown className="h-6 w-6" />;
-    if (rewardName.toLowerCase().includes('champion')) return <Medal className="h-6 w-6" />;
-    return <Trophy className="h-6 w-6" />;
+  const getUserAchievement = (achievementId: string) => {
+    return userAchievements?.find(ua => ua.achievement_id === achievementId);
   };
 
-  const getRewardColor = (rewardName: string) => {
-    if (rewardName.toLowerCase().includes('master') || rewardName.toLowerCase().includes('champion')) return 'text-yellow-500';
-    if (rewardName.toLowerCase().includes('streak')) return 'text-blue-500';
-    if (rewardName.toLowerCase().includes('first')) return 'text-green-500';
-    return 'text-primary';
+  const getAchievementsByCategory = (category: string) => {
+    return achievements?.filter(a => a.category === category) || [];
   };
+
+  const categories = achievements ? [...new Set(achievements.map(a => a.category))] : [];
+
+  if (achievementsLoading || userAchievementsLoading || levelLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="md:col-span-2 space-y-6">
+              <Skeleton className="h-10 w-48" />
+              <div className="grid gap-4">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="h-24" />
+                ))}
+              </div>
+            </div>
+            <div className="space-y-6">
+              <Skeleton className="h-32" />
+              <Skeleton className="h-48" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Achievements</h1>
-          <p className="text-muted-foreground">
-            Track your progress and unlock rewards as you master JEE preparation
-          </p>
-        </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="md:col-span-2 space-y-6">
+            <div className="flex items-center gap-3">
+              <Trophy className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl font-bold">Achievements</h1>
+            </div>
 
-        {/* Achievement Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-full">
-                  <Trophy className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{unlockedRewards.length}</div>
-                  <p className="text-sm text-muted-foreground">Achievements Earned</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-full">
-                  <Target className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{allRewards?.length || 0}</div>
-                  <p className="text-sm text-muted-foreground">Total Available</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-full">
-                  <Star className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">
-                    {userRewards?.reduce((sum, ur) => sum + (ur.reward?.points_reward || 0), 0) || 0}
-                  </div>
-                  <p className="text-sm text-muted-foreground">Bonus Points</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Progress Overview */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Overall Progress</CardTitle>
-            <CardDescription>
-              Your achievement completion rate
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Progress</span>
-                <span>{unlockedRewards.length} / {allRewards?.length || 0}</span>
-              </div>
-              <Progress 
-                value={allRewards?.length ? (unlockedRewards.length / allRewards.length) * 100 : 0} 
-                className="h-2"
+            {dailyChallenge && (
+              <DailyChallengeCard 
+                challenge={dailyChallenge} 
+                progress={challengeProgress || undefined} 
               />
-            </div>
-          </CardContent>
-        </Card>
+            )}
 
-        {/* Unlocked Achievements */}
-        {unlockedRewards.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-              <Award className="h-6 w-6 text-primary" />
-              Unlocked Achievements
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {unlockedRewards.map((reward) => {
-                const userReward = userRewards?.find(ur => ur.reward_id === reward.id);
-                return (
-                  <Card key={reward.id} className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/20">
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        <div className={`p-3 bg-green-100 dark:bg-green-900/50 rounded-full ${getRewardColor(reward.name)}`}>
-                          {getRewardIcon(reward.name)}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold mb-1">{reward.name}</h3>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {reward.description}
-                          </p>
-                          <div className="flex items-center justify-between">
-                            <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                              +{reward.points_reward} pts
-                            </Badge>
-                            {userReward && (
-                              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {new Date(userReward.earned_at).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        )}
+            <Tabs defaultValue={categories[0]} className="space-y-4">
+              <TabsList className="grid w-full grid-cols-5">
+                {categories.map((category) => {
+                  const Icon = categoryIcons[category as keyof typeof categoryIcons] || Trophy;
+                  return (
+                    <TabsTrigger 
+                      key={category} 
+                      value={category}
+                      className="flex items-center gap-1 text-xs"
+                    >
+                      <Icon className="h-3 w-3" />
+                      <span className="capitalize hidden sm:inline">{category}</span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
 
-        {/* Locked Achievements */}
-        {lockedRewards.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-              <Target className="h-6 w-6 text-muted-foreground" />
-              Available Achievements
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {lockedRewards.map((reward) => (
-                <Card key={reward.id} className="border-muted bg-muted/30">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-muted rounded-full text-muted-foreground">
-                        {getRewardIcon(reward.name)}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold mb-1 text-muted-foreground">{reward.name}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {reward.description}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <Badge variant="outline">
-                            +{reward.points_reward} pts
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {reward.condition_type === 'questions_correct' && `Answer ${reward.condition_value} questions correctly`}
-                            {reward.condition_type === 'points_earned' && `Earn ${reward.condition_value} points`}
-                            {reward.condition_type === 'streak_days' && `Maintain ${reward.condition_value} day streak`}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              {categories.map((category) => (
+                <TabsContent key={category} value={category} className="space-y-4">
+                  <div className="grid gap-4">
+                    {getAchievementsByCategory(category).map((achievement) => (
+                      <AchievementCard
+                        key={achievement.id}
+                        achievement={achievement}
+                        userAchievement={getUserAchievement(achievement.id)}
+                      />
+                    ))}
+                  </div>
+                </TabsContent>
               ))}
-            </div>
+            </Tabs>
           </div>
-        )}
 
-        {/* Empty State */}
-        {(!allRewards || allRewards.length === 0) && (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Achievements Available</h3>
-              <p className="text-muted-foreground">
-                Start practicing questions to unlock your first achievements!
-              </p>
-            </CardContent>
-          </Card>
-        )}
+          <div className="space-y-6">
+            {userLevel && <LevelDisplay userLevel={userLevel} />}
+            
+            <LeaderboardCard />
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Progress Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-primary">
+                      {userAchievements?.filter(ua => ua.is_completed).length || 0}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Achievements</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-primary">
+                      {userLevel?.total_xp || 0}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Total XP</div>
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-lg font-semibold">Level {userLevel?.current_level || 1}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {userLevel?.xp_for_next_level || 0} XP to next level
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
-
-export default Achievements;

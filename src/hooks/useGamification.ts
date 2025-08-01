@@ -4,13 +4,15 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export interface Achievement {
   id: string;
-  title: string;
+  name: string;
   description: string;
   icon: string;
-  points: number;
+  category: string;
   condition_type: string;
   condition_value: number;
-  is_hidden: boolean;
+  points_reward: number;
+  badge_color: string;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -18,19 +20,24 @@ export interface UserAchievement {
   id: string;
   user_id: string;
   achievement_id: string;
-  unlocked_at: string;
-  achievement: Achievement;
+  earned_at: string;
+  progress: number;
+  is_completed: boolean;
+  achievement?: Achievement;
 }
 
 export interface DailyChallenge {
   id: string;
-  title: string;
-  description: string;
-  target_value: number;
-  challenge_type: string;
-  points_reward: number;
   date: string;
+  challenge_type: string;
+  target_value: number;
+  subject_filter?: string;
+  difficulty_filter?: string;
+  points_reward: number;
+  bonus_points: number;
+  description: string;
   is_active: boolean;
+  created_at: string;
 }
 
 export interface UserChallengeProgress {
@@ -39,145 +46,117 @@ export interface UserChallengeProgress {
   challenge_id: string;
   current_progress: number;
   is_completed: boolean;
-  completed_at: string | null;
-  challenge: DailyChallenge;
+  completed_at?: string;
+  points_earned: number;
+  created_at: string;
+  challenge?: DailyChallenge;
 }
 
 export interface UserLevel {
   id: string;
   user_id: string;
   current_level: number;
-  experience_points: number;
-  points_to_next_level: number;
+  total_xp: number;
+  xp_for_next_level: number;
+  level_rewards_claimed: string[];
   updated_at: string;
 }
 
+export interface LeaderboardEntry {
+  id: string;
+  current_level: number;
+  total_xp: number;
+  profiles: {
+    username: string;
+    full_name: string;
+  };
+}
+
+// Achievements hooks
 export const useAchievements = () => {
+  return useQuery({
+    queryKey: ['achievements'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('achievements')
+        .select('*')
+        .eq('is_active', true)
+        .order('category', { ascending: true });
+      
+      if (error) throw error;
+      return data as Achievement[];
+    },
+  });
+};
+
+export const useUserAchievements = () => {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: ['achievements', user?.id],
+    queryKey: ['user-achievements', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
-      // Using existing user_rewards table for now
       const { data, error } = await supabase
-        .from('user_rewards')
+        .from('user_achievements')
         .select(`
           *,
-          reward:rewards(*)
+          achievement:achievements(*)
         `)
         .eq('user_id', user.id)
         .order('earned_at', { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      return data as UserAchievement[];
     },
     enabled: !!user,
   });
 };
 
-export const useAvailableAchievements = () => {
-  const { user } = useAuth();
-  
+// Daily challenges hooks
+export const useDailyChallenge = () => {
   return useQuery({
-    queryKey: ['available-achievements', user?.id],
+    queryKey: ['daily-challenge'],
     queryFn: async () => {
-      if (!user) return [];
+      const today = new Date().toISOString().split('T')[0];
       
-      // Using existing rewards table for now
       const { data, error } = await supabase
-        .from('rewards')
+        .from('daily_challenges')
         .select('*')
-        .order('points_required', { ascending: true });
+        .eq('date', today)
+        .eq('is_active', true)
+        .single();
       
-      if (error) throw error;
-      return data || [];
+      if (error && error.code !== 'PGRST116') throw error;
+      return data as DailyChallenge | null;
     },
-    enabled: !!user,
   });
 };
 
-export const useDailyChallenges = () => {
+export const useUserChallengeProgress = () => {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: ['daily-challenges', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      // Mock data for now until tables are created
-      return [
-        {
-          id: '1',
-          user_id: user.id,
-          challenge_id: '1',
-          current_progress: 3,
-          is_completed: false,
-          completed_at: null,
-          challenge: {
-            id: '1',
-            title: 'Answer 5 Questions',
-            description: 'Solve 5 practice questions today',
-            target_value: 5,
-            challenge_type: 'questions_answered',
-            points_reward: 50,
-            date: new Date().toISOString().split('T')[0],
-            is_active: true
-          }
-        }
-      ];
-    },
-    enabled: !!user,
-  });
-};
-
-export const useUserLevel = () => {
-  const { user } = useAuth();
-  
-  return useQuery({
-    queryKey: ['user-level', user?.id],
+    queryKey: ['user-challenge-progress', user?.id],
     queryFn: async () => {
       if (!user) return null;
       
-      // Mock data based on user profile points
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('total_points')
-        .eq('id', user.id)
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data, error } = await supabase
+        .from('user_challenge_progress')
+        .select(`
+          *,
+          challenge:daily_challenges(*)
+        `)
+        .eq('user_id', user.id)
+        .eq('challenge.date', today)
         .single();
       
-      const points = profile?.total_points || 0;
-      const level = Math.floor(points / 1000) + 1;
-      const currentLevelPoints = points % 1000;
-      const pointsToNext = 1000 - currentLevelPoints;
-      
-      return {
-        id: '1',
-        user_id: user.id,
-        current_level: level,
-        experience_points: currentLevelPoints,
-        points_to_next_level: pointsToNext,
-        updated_at: new Date().toISOString()
-      };
+      if (error && error.code !== 'PGRST116') throw error;
+      return data as UserChallengeProgress | null;
     },
     enabled: !!user,
-  });
-};
-
-export const useLeaderboard = () => {
-  return useQuery({
-    queryKey: ['leaderboard'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, full_name, total_points')
-        .order('total_points', { ascending: false })
-        .limit(100);
-      
-      if (error) throw error;
-      return data;
-    },
   });
 };
 
@@ -189,12 +168,84 @@ export const useUpdateChallengeProgress = () => {
     mutationFn: async ({ challengeId, progress }: { challengeId: string; progress: number }) => {
       if (!user) throw new Error('No user');
       
-      // Mock implementation for now
-      return { challengeId, progress };
+      const { data, error } = await supabase
+        .from('user_challenge_progress')
+        .upsert({
+          user_id: user.id,
+          challenge_id: challengeId,
+          current_progress: progress,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['daily-challenges'] });
-      queryClient.invalidateQueries({ queryKey: ['user-level'] });
+      queryClient.invalidateQueries({ queryKey: ['user-challenge-progress'] });
+    },
+  });
+};
+
+// User level hooks
+export const useUserLevel = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['user-level', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('user_levels')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        // If no level record exists, create one
+        if (error.code === 'PGRST116') {
+          const { data: newData, error: insertError } = await supabase
+            .from('user_levels')
+            .insert({
+              user_id: user.id,
+              current_level: 1,
+              total_xp: 0,
+              xp_for_next_level: 100,
+            })
+            .select()
+            .single();
+          
+          if (insertError) throw insertError;
+          return newData as UserLevel;
+        }
+        throw error;
+      }
+      
+      return data as UserLevel;
+    },
+    enabled: !!user,
+  });
+};
+
+// Leaderboard hook
+export const useLeaderboard = (timeFrame: 'daily' | 'weekly' | 'monthly' = 'weekly') => {
+  return useQuery({
+    queryKey: ['leaderboard', timeFrame],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_levels')
+        .select(`
+          id,
+          current_level,
+          total_xp,
+          profiles!inner(username, full_name)
+        `)
+        .order('total_xp', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      return data as any[];
     },
   });
 };

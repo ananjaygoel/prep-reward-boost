@@ -11,7 +11,7 @@ import Auth from "./pages/Auth";
 import Practice from "./pages/Practice";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
-import Achievements from "./pages/Achievements";
+import { Achievements } from "./pages/Achievements";
 import Admin from "./pages/Admin";
 import InternPortal from "./pages/InternPortal";
 import StudyPlans from "./pages/StudyPlans";

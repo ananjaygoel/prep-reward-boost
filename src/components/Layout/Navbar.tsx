@@ -47,6 +47,9 @@ const Navbar = () => {
             <Link to="/mock-tests" className="text-sm font-medium transition-colors hover:text-primary">
               Mock Tests
             </Link>
+            <Link to="/achievements" className="text-sm font-medium transition-colors hover:text-primary">
+              Achievements
+            </Link>
           </div>
 
           <div className="flex items-center gap-4">

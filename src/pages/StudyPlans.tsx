@@ -5,16 +5,22 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { StudyPlanCard } from '@/components/StudyPlans/StudyPlanCard';
 import { WeeklySchedule } from '@/components/StudyPlans/WeeklySchedule';
 import { CreatePlanDialog } from '@/components/StudyPlans/CreatePlanDialog';
-import { TrendingUp, Lightbulb, CheckCircle, Brain, Target, Plus } from 'lucide-react';
+import { StudyPlanTemplates } from '@/components/StudyPlans/StudyPlanTemplates';
+import { StudySessionTimer } from '@/components/StudyPlans/StudySessionTimer';
+import { StudyAnalytics } from '@/components/StudyPlans/StudyAnalytics';
+import { RevisionScheduler } from '@/components/StudyPlans/RevisionScheduler';
+import { TrendingUp, Lightbulb, CheckCircle, Brain, Plus, Timer, BarChart3, RefreshCw, Zap } from 'lucide-react';
 
 const StudyPlans: React.FC = () => {
   const { toast } = useToast();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>('');
+  const [activeTab, setActiveTab] = useState('plans');
   
   const { data: studyPlans, isLoading } = useStudyPlans();
   const { data: dailyGoals } = useDailyGoals(selectedPlan);
@@ -66,16 +72,16 @@ const StudyPlans: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gradient">AI Study Plans</h1>
-            <p className="text-muted-foreground">Personalized adaptive learning paths for JEE success</p>
+            <p className="text-muted-foreground">Comprehensive study management with analytics and revision tracking</p>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <Button onClick={handleGenerateInsights} disabled={generateInsightsMutation.isPending}>
               <Brain className="h-4 w-4 mr-2" />
-              {generateInsightsMutation.isPending ? 'Generating...' : 'Generate AI Insights'}
+              AI Insights
             </Button>
             <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Create Study Plan
+              Create Plan
             </Button>
           </div>
         </div>
@@ -115,54 +121,142 @@ const StudyPlans: React.FC = () => {
           </div>
         )}
 
-        {/* Study Plans Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {studyPlans?.map((plan) => (
-            <StudyPlanCard
-              key={plan.id}
-              plan={plan}
-              onSelect={setSelectedPlan}
-              isSelected={selectedPlan === plan.id}
-              onStart={(plan) => {
-                // TODO: Navigate to practice page with plan context
-                toast({
-                  title: 'Starting Study Session',
-                  description: `Starting focused study for ${plan.title}`,
-                });
-              }}
-            />
-          ))}
-        </div>
+        {/* Main Content Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="templates" className="flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              Templates
+            </TabsTrigger>
+            <TabsTrigger value="plans" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              My Plans
+            </TabsTrigger>
+            <TabsTrigger value="timer" className="flex items-center gap-2">
+              <Timer className="h-4 w-4" />
+              Study Timer
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="revision" className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Revision
+            </TabsTrigger>
+            <TabsTrigger value="schedule" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Schedule
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Weekly Schedule for Selected Plan */}
-        {selectedPlan && dailyGoals && (
-          <WeeklySchedule 
-            goals={dailyGoals}
-            onStartStudy={(goal) => {
-              // TODO: Navigate to practice page with daily goal context
+          {/* Templates Tab */}
+          <TabsContent value="templates" className="space-y-6">
+            <StudyPlanTemplates onTemplateSelect={(template) => {
               toast({
-                title: 'Starting Daily Goal',
-                description: `Starting study session for ${new Date(goal.date).toLocaleDateString()}`,
+                title: 'Template Selected',
+                description: `You can customize the "${template.title}" template before creating your plan.`,
               });
-            }}
-          />
-        )}
+              setShowCreateDialog(true);
+            }} />
+          </TabsContent>
 
-        {/* Empty State */}
-        {(!studyPlans || studyPlans.length === 0) && (
-          <Card className="text-center py-12">
-            <CardContent>
-              <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Study Plans Yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Create your first AI-powered study plan to get started with personalized learning.
-              </p>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                Create Your First Plan
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+          {/* My Plans Tab */}
+          <TabsContent value="plans" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {studyPlans?.map((plan) => (
+                <StudyPlanCard
+                  key={plan.id}
+                  plan={plan}
+                  onSelect={setSelectedPlan}
+                  isSelected={selectedPlan === plan.id}
+                  onStart={(plan) => {
+                    setActiveTab('timer');
+                    toast({
+                      title: 'Starting Study Session',
+                      description: `Starting focused study for ${plan.title}`,
+                    });
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Empty State for Plans */}
+            {(!studyPlans || studyPlans.length === 0) && (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Study Plans Yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Create your first AI-powered study plan to get started with personalized learning.
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <Button onClick={() => setActiveTab('templates')}>
+                      Browse Templates
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowCreateDialog(true)}>
+                      Create Custom Plan
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Study Timer Tab */}
+          <TabsContent value="timer" className="space-y-6">
+            <div className="max-w-2xl mx-auto">
+              <StudySessionTimer
+                studyPlanId={selectedPlan}
+                onSessionComplete={(duration, questions) => {
+                  toast({
+                    title: 'Session Complete! 🎉',
+                    description: `You studied for ${Math.floor(duration / 60)} minutes and solved ${questions} questions.`,
+                  });
+                }}
+              />
+            </div>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <StudyAnalytics studyPlanId={selectedPlan} />
+          </TabsContent>
+
+          {/* Revision Tab */}
+          <TabsContent value="revision" className="space-y-6">
+            <RevisionScheduler studyPlanId={selectedPlan} />
+          </TabsContent>
+
+          {/* Schedule Tab */}
+          <TabsContent value="schedule" className="space-y-6">
+            {selectedPlan && dailyGoals ? (
+              <WeeklySchedule 
+                goals={dailyGoals}
+                onStartStudy={(goal) => {
+                  setActiveTab('timer');
+                  toast({
+                    title: 'Starting Daily Goal',
+                    description: `Starting study session for ${new Date(goal.date).toLocaleDateString()}`,
+                  });
+                }}
+              />
+            ) : (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Study Plan Selected</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Select a study plan to view your weekly schedule and daily goals.
+                  </p>
+                  <Button onClick={() => setActiveTab('plans')}>
+                    View My Plans
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
 
         {/* Create Plan Dialog */}
         <CreatePlanDialog 

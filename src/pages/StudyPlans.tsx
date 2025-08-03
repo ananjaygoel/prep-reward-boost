@@ -14,7 +14,12 @@ import { StudyPlanTemplates } from '@/components/StudyPlans/StudyPlanTemplates';
 import { StudySessionTimer } from '@/components/StudyPlans/StudySessionTimer';
 import { StudyAnalytics } from '@/components/StudyPlans/StudyAnalytics';
 import { RevisionScheduler } from '@/components/StudyPlans/RevisionScheduler';
-import { TrendingUp, Lightbulb, CheckCircle, Brain, Plus, Timer, BarChart3, RefreshCw, Zap } from 'lucide-react';
+import { NotesManager } from '@/components/StudyPlans/NotesManager';
+import { FlashcardsSystem } from '@/components/StudyPlans/FlashcardsSystem';
+import { StudyCalendar } from '@/components/StudyPlans/StudyCalendar';
+import { ProgressDashboard } from '@/components/StudyPlans/ProgressDashboard';
+import { StudyHistory } from '@/components/StudyPlans/StudyHistory';
+import { TrendingUp, Lightbulb, CheckCircle, Brain, Plus, Timer, BarChart3, RefreshCw, Zap, StickyNote, Zap as FlashIcon, Calendar as CalendarIcon, TrendingUp as ProgressIcon, History } from 'lucide-react';
 
 const StudyPlans: React.FC = () => {
   const { toast } = useToast();
@@ -123,30 +128,50 @@ const StudyPlans: React.FC = () => {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="templates" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-11 overflow-x-auto">
+            <TabsTrigger value="templates" className="flex items-center gap-2 whitespace-nowrap">
               <Zap className="h-4 w-4" />
               Templates
             </TabsTrigger>
-            <TabsTrigger value="plans" className="flex items-center gap-2">
+            <TabsTrigger value="plans" className="flex items-center gap-2 whitespace-nowrap">
               <TrendingUp className="h-4 w-4" />
               My Plans
             </TabsTrigger>
-            <TabsTrigger value="timer" className="flex items-center gap-2">
+            <TabsTrigger value="timer" className="flex items-center gap-2 whitespace-nowrap">
               <Timer className="h-4 w-4" />
               Study Timer
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <TabsTrigger value="analytics" className="flex items-center gap-2 whitespace-nowrap">
               <BarChart3 className="h-4 w-4" />
               Analytics
             </TabsTrigger>
-            <TabsTrigger value="revision" className="flex items-center gap-2">
+            <TabsTrigger value="revision" className="flex items-center gap-2 whitespace-nowrap">
               <RefreshCw className="h-4 w-4" />
               Revision
             </TabsTrigger>
-            <TabsTrigger value="schedule" className="flex items-center gap-2">
+            <TabsTrigger value="schedule" className="flex items-center gap-2 whitespace-nowrap">
               <CheckCircle className="h-4 w-4" />
               Schedule
+            </TabsTrigger>
+            <TabsTrigger value="notes" className="flex items-center gap-2 whitespace-nowrap">
+              <StickyNote className="h-4 w-4" />
+              Notes
+            </TabsTrigger>
+            <TabsTrigger value="flashcards" className="flex items-center gap-2 whitespace-nowrap">
+              <FlashIcon className="h-4 w-4" />
+              Flashcards
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center gap-2 whitespace-nowrap">
+              <CalendarIcon className="h-4 w-4" />
+              Calendar
+            </TabsTrigger>
+            <TabsTrigger value="progress" className="flex items-center gap-2 whitespace-nowrap">
+              <ProgressIcon className="h-4 w-4" />
+              Progress
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2 whitespace-nowrap">
+              <History className="h-4 w-4" />
+              History
             </TabsTrigger>
           </TabsList>
 
@@ -255,6 +280,31 @@ const StudyPlans: React.FC = () => {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* Notes Tab */}
+          <TabsContent value="notes" className="space-y-6">
+            <NotesManager />
+          </TabsContent>
+
+          {/* Flashcards Tab */}
+          <TabsContent value="flashcards" className="space-y-6">
+            <FlashcardsSystem />
+          </TabsContent>
+
+          {/* Calendar Tab */}
+          <TabsContent value="calendar" className="space-y-6">
+            <StudyCalendar />
+          </TabsContent>
+
+          {/* Progress Tab */}
+          <TabsContent value="progress" className="space-y-6">
+            <ProgressDashboard />
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history" className="space-y-6">
+            <StudyHistory />
           </TabsContent>
         </Tabs>
 

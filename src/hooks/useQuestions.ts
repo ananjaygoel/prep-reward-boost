@@ -77,7 +77,7 @@ export const useQuestions = (filters: QuestionFilters = {}) => {
 
 export const useSubmitAnswer = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   
   return useMutation({
     mutationFn: async ({
@@ -93,7 +93,11 @@ export const useSubmitAnswer = () => {
       timeTaken: number;
       pointsEarned: number;
     }) => {
-      if (!user) throw new Error('No user');
+      if (!user || !session) throw new Error('User not authenticated');
+      
+      // Get current session to ensure auth context is valid
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession) throw new Error('No active session');
       
       const { data, error } = await supabase
         .from('practice_sessions')
@@ -109,8 +113,6 @@ export const useSubmitAnswer = () => {
         .single();
       
       if (error) throw error;
-      
-      // TODO: Update user profile points when function is created
       
       return data;
     },

@@ -30,11 +30,15 @@ export interface QuestionFilters {
   topic?: string;
   difficulty?: 'easy' | 'medium' | 'hard';
   year?: number;
+  excludeAnswered?: boolean;
+  randomize?: boolean;
 }
 
 export const useQuestions = (filters: QuestionFilters = {}) => {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ['questions', filters],
+    queryKey: ['questions', filters, user?.id],
     queryFn: async () => {
       let query = supabase
         .from('questions')
@@ -70,7 +74,27 @@ export const useQuestions = (filters: QuestionFilters = {}) => {
       const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Question[];
+      
+      let questions = data as Question[];
+      
+      // Filter out already correctly answered questions if requested
+      if (filters.excludeAnswered && user) {
+        const { data: answeredQuestions } = await supabase
+          .from('practice_sessions')
+          .select('question_id')
+          .eq('user_id', user.id)
+          .eq('is_correct', true);
+        
+        const answeredIds = new Set(answeredQuestions?.map(session => session.question_id) || []);
+        questions = questions.filter(q => !answeredIds.has(q.id));
+      }
+      
+      // Randomize questions if requested
+      if (filters.randomize) {
+        questions = [...questions].sort(() => Math.random() - 0.5);
+      }
+      
+      return questions;
     },
   });
 };

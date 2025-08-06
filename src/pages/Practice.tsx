@@ -22,7 +22,12 @@ const Practice = () => {
   const difficulty = searchParams.get('difficulty') as 'easy' | 'medium' | 'hard' | undefined;
   const subject = searchParams.get('subject');
   
-  const { data: questions, isLoading } = useQuestions({ difficulty, subject });
+  const { data: questions, isLoading } = useQuestions({ 
+    difficulty, 
+    subject,
+    randomize: true,
+    excludeAnswered: false // User can change this in settings later
+  });
   const submitAnswer = useSubmitAnswer();
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);

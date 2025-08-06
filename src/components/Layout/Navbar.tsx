@@ -11,17 +11,46 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { BookOpen, LogOut, Settings, Trophy, User, Shield } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useUserRoles } from '@/hooks/useUserRoles';
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
   const { isAdmin, isContentCreator } = useUserRoles();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
+  };
+
+  const getPageName = () => {
+    const path = location.pathname;
+    switch (path) {
+      case '/':
+        return 'Dashboard';
+      case '/practice':
+        return 'Practice';
+      case '/study-plans':
+        return 'Study Plans';
+      case '/analytics':
+        return 'Analytics';
+      case '/mock-tests':
+        return 'Mock Tests';
+      case '/achievements':
+        return 'Achievements';
+      case '/profile':
+        return 'Profile';
+      case '/settings':
+        return 'Settings';
+      case '/admin':
+        return 'Admin Panel';
+      case '/intern':
+        return 'Intern Portal';
+      default:
+        return 'JEEPrep.tech';
+    }
   };
 
   const userInitials = user?.user_metadata?.full_name 
@@ -32,10 +61,14 @@ const Navbar = () => {
     <nav className="border-b bg-card shadow-subtle">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <BookOpen className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold text-gradient">JEEPrep.tech</h1>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <BookOpen className="h-8 w-8 text-primary" />
+              <span className="text-2xl font-bold text-gradient">JEEPrep.tech</span>
+            </Link>
+            <div className="h-6 w-px bg-border mx-2" />
+            <h1 className="text-xl font-semibold text-foreground">{getPageName()}</h1>
+          </div>
 
           <div className="flex items-center gap-6">
             <Link to="/study-plans" className="text-sm font-medium transition-colors hover:text-primary">

@@ -7,85 +7,22 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Brain, RotateCcw, Check, X, Plus, Play, BookOpen, Clock, Target } from 'lucide-react';
+import { Brain, RotateCcw, Check, X, Plus, Play, BookOpen, Clock, Target, Trash2 } from 'lucide-react';
+import { useFlashcards, useCreateFlashcard, useUpdateFlashcard, useDeleteFlashcard, Flashcard } from '@/hooks/useFlashcards';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 
-interface Flashcard {
-  id: string;
-  front: string;
-  back: string;
-  subject: string;
-  topic: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  lastReviewed: string | null;
-  nextReview: string;
-  repetitions: number;
-  easeFactor: number;
-  interval: number;
-  correctStreak: number;
+interface FlashcardsSystemProps {
+  studyPlanId: string | null;
 }
 
-const mockFlashcards: Flashcard[] = [
-  {
-    id: '1',
-    front: 'What is the derivative of sin(x)?',
-    back: 'cos(x)',
-    subject: 'Mathematics',
-    topic: 'Calculus',
-    difficulty: 'easy',
-    lastReviewed: '2024-01-15',
-    nextReview: '2024-01-17',
-    repetitions: 3,
-    easeFactor: 2.5,
-    interval: 2,
-    correctStreak: 2
-  },
-  {
-    id: '2',
-    front: 'State Newton\'s Second Law',
-    back: 'F = ma (Force equals mass times acceleration)',
-    subject: 'Physics',
-    topic: 'Mechanics',
-    difficulty: 'medium',
-    lastReviewed: '2024-01-14',
-    nextReview: '2024-01-16',
-    repetitions: 2,
-    easeFactor: 2.3,
-    interval: 1,
-    correctStreak: 1
-  },
-  {
-    id: '3',
-    front: 'What is the molecular formula of benzene?',
-    back: 'C₆H₆',
-    subject: 'Chemistry',
-    topic: 'Organic Chemistry',
-    difficulty: 'easy',
-    lastReviewed: null,
-    nextReview: '2024-01-16',
-    repetitions: 0,
-    easeFactor: 2.5,
-    interval: 0,
-    correctStreak: 0
-  },
-  {
-    id: '4',
-    front: 'Explain the photoelectric effect',
-    back: 'When light hits a metal surface, electrons are emitted if the light frequency exceeds a threshold. The kinetic energy of emitted electrons depends on light frequency, not intensity. This proved light\'s particle nature.',
-    subject: 'Physics',
-    topic: 'Modern Physics',
-    difficulty: 'hard',
-    lastReviewed: '2024-01-13',
-    nextReview: '2024-01-18',
-    repetitions: 1,
-    easeFactor: 2.1,
-    interval: 3,
-    correctStreak: 0
-  }
-];
-
-export const FlashcardsSystem: React.FC = () => {
+export const FlashcardsSystem: React.FC<FlashcardsSystemProps> = ({ studyPlanId }) => {
   const { toast } = useToast();
-  const [flashcards, setFlashcards] = useState<Flashcard[]>(mockFlashcards);
+  const { data: flashcards = [], isLoading, isError } = useFlashcards(studyPlanId);
+  const createFlashcard = useCreateFlashcard();
+  const updateFlashcard = useUpdateFlashcard();
+  const deleteFlashcard = useDeleteFlashcard();
+
   const [currentCard, setCurrentCard] = useState<Flashcard | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [studyMode, setStudyMode] = useState(false);
@@ -103,9 +40,9 @@ export const FlashcardsSystem: React.FC = () => {
 
   const today = new Date().toISOString().split('T')[0];
   
-  const dueCards = flashcards.filter(card => card.nextReview <= today);
+  const dueCards = flashcards.filter(card => card.next_review_at <= today);
   const totalCards = flashcards.length;
-  const reviewedToday = flashcards.filter(card => card.lastReviewed === today).length;
+  const reviewedToday = flashcards.filter(card => card.last_reviewed_at?.startsWith(today)).length;
 
   const startStudySession = () => {
     const queue = dueCards.length > 0 ? dueCards : flashcards.slice(0, 10);
@@ -116,42 +53,38 @@ export const FlashcardsSystem: React.FC = () => {
     setStudyProgress(0);
   };
 
-  const calculateNextReview = (card: Flashcard, quality: number): Flashcard => {
-    const newCard = { ...card };
+  const calculateNextReview = (card: Flashcard, quality: number): Partial<Flashcard> => {
+    let { repetitions, ease_factor, interval } = card;
     
     if (quality >= 3) {
-      if (newCard.repetitions === 0) {
-        newCard.interval = 1;
-      } else if (newCard.repetitions === 1) {
-        newCard.interval = 6;
+      if (repetitions === 0) {
+        interval = 1;
+      } else if (repetitions === 1) {
+        interval = 6;
       } else {
-        newCard.interval = Math.round(newCard.interval * newCard.easeFactor);
+        interval = Math.round(interval * ease_factor);
       }
-      newCard.repetitions += 1;
-      newCard.correctStreak += 1;
+      repetitions += 1;
     } else {
-      newCard.repetitions = 0;
-      newCard.interval = 1;
-      newCard.correctStreak = 0;
+      repetitions = 0;
+      interval = 1;
     }
 
-    newCard.easeFactor = Math.max(1.3, newCard.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)));
+    ease_factor = Math.max(1.3, ease_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)));
     
     const nextDate = new Date();
-    nextDate.setDate(nextDate.getDate() + newCard.interval);
-    newCard.nextReview = nextDate.toISOString().split('T')[0];
-    newCard.lastReviewed = today;
+    nextDate.setDate(nextDate.getDate() + interval);
+    const next_review_at = nextDate.toISOString();
+    const last_reviewed_at = new Date().toISOString();
 
-    return newCard;
+    return { repetitions, ease_factor, interval, next_review_at, last_reviewed_at };
   };
 
-  const handleCardResponse = (quality: number) => {
+  const handleCardResponse = async (quality: number) => {
     if (!currentCard) return;
 
-    const updatedCard = calculateNextReview(currentCard, quality);
-    setFlashcards(prev => prev.map(card => 
-      card.id === currentCard.id ? updatedCard : card
-    ));
+    const updates = calculateNextReview(currentCard, quality);
+    await updateFlashcard.mutateAsync({ id: currentCard.id, ...updates });
 
     const newQueue = studyQueue.slice(1);
     setStudyQueue(newQueue);
@@ -170,28 +103,21 @@ export const FlashcardsSystem: React.FC = () => {
     }
   };
 
-  const handleCreateCard = () => {
-    if (!newCard.front || !newCard.back) {
+  const handleCreateCard = async () => {
+    if (!newCard.front || !newCard.back || !studyPlanId) {
       toast({
         title: 'Error',
-        description: 'Please fill in both front and back of the card',
+        description: 'Please fill in all fields and select a study plan.',
         variant: 'destructive'
       });
       return;
     }
 
-    const card: Flashcard = {
-      id: Date.now().toString(),
+    await createFlashcard.mutateAsync({
       ...newCard,
-      lastReviewed: null,
-      nextReview: today,
-      repetitions: 0,
-      easeFactor: 2.5,
-      interval: 0,
-      correctStreak: 0
-    };
+      study_plan_id: studyPlanId
+    });
 
-    setFlashcards([card, ...flashcards]);
     setNewCard({
       front: '',
       back: '',
@@ -206,6 +132,52 @@ export const FlashcardsSystem: React.FC = () => {
       description: 'Flashcard created successfully'
     });
   };
+
+  const handleDeleteCard = async (id: string) => {
+    await deleteFlashcard.mutateAsync(id);
+    toast({
+      title: 'Success',
+      description: 'Flashcard deleted successfully'
+    });
+  };
+
+  if (!studyPlanId) {
+    return (
+      <Card className="text-center py-12">
+        <CardContent>
+          <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Study Plan Selected</h3>
+          <p className="text-muted-foreground">
+            Please select a study plan to manage flashcards.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-48" />
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-28" />
+            <Skeleton className="h-10 w-28" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
+        </div>
+        <div className="grid gap-4">
+          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-28" />)}
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return <div className="text-red-500">Error loading flashcards.</div>;
+  }
 
   if (studyMode && currentCard) {
     return (
@@ -333,15 +305,19 @@ export const FlashcardsSystem: React.FC = () => {
                     onChange={(e) => setNewCard({ ...newCard, topic: e.target.value })}
                   />
                 </div>
-                <select
+                <Select
                   value={newCard.difficulty}
-                  onChange={(e) => setNewCard({ ...newCard, difficulty: e.target.value as any })}
-                  className="w-full px-3 py-2 border rounded-md"
+                  onValueChange={(value) => setNewCard({ ...newCard, difficulty: value as any })}
                 >
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select difficulty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="easy">Easy</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="hard">Hard</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Textarea
                   placeholder="Front of card (question)"
                   value={newCard.front}
@@ -355,7 +331,9 @@ export const FlashcardsSystem: React.FC = () => {
                   rows={4}
                 />
                 <div className="flex gap-2">
-                  <Button onClick={handleCreateCard}>Create Card</Button>
+                  <Button onClick={handleCreateCard} disabled={createFlashcard.isPending}>
+                    {createFlashcard.isPending ? 'Creating...' : 'Create Card'}
+                  </Button>
                   <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancel</Button>
                 </div>
               </div>
@@ -382,7 +360,6 @@ export const FlashcardsSystem: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -394,7 +371,6 @@ export const FlashcardsSystem: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -406,15 +382,14 @@ export const FlashcardsSystem: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2">
+             <div className="flex items-center gap-2">
               <Brain className="h-5 w-5 text-purple-500" />
               <div>
                 <p className="text-sm text-muted-foreground">Success Rate</p>
                 <p className="text-2xl font-bold">
-                  {totalCards > 0 ? Math.round((flashcards.filter(c => c.correctStreak > 0).length / totalCards) * 100) : 0}%
+                  {totalCards > 0 ? Math.round((flashcards.filter(c => (c.repetitions || 0) > 0).length / totalCards) * 100) : 0}%
                 </p>
               </div>
             </div>
@@ -439,7 +414,7 @@ export const FlashcardsSystem: React.FC = () => {
                     }>
                       {card.difficulty}
                     </Badge>
-                    {card.nextReview <= today && (
+                    {card.next_review_at <= today && (
                       <Badge variant="destructive">Due</Badge>
                     )}
                   </div>
@@ -452,9 +427,19 @@ export const FlashcardsSystem: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="text-right text-sm text-muted-foreground">
-                  <p>Next: {card.nextReview}</p>
-                  <p>Streak: {card.correctStreak}</p>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="text-right text-sm text-muted-foreground">
+                    <p>Next: {new Date(card.next_review_at).toLocaleDateString()}</p>
+                    <p>Reps: {card.repetitions}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDeleteCard(card.id)}
+                    disabled={deleteFlashcard.isPending}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </CardContent>

@@ -284,12 +284,12 @@ const StudyPlans: React.FC = () => {
 
           {/* Notes Tab */}
           <TabsContent value="notes" className="space-y-6">
-            <NotesManager />
+            <NotesManager studyPlanId={selectedPlan} />
           </TabsContent>
 
           {/* Flashcards Tab */}
           <TabsContent value="flashcards" className="space-y-6">
-            <FlashcardsSystem />
+            <FlashcardsSystem studyPlanId={selectedPlan} />
           </TabsContent>
 
           {/* Calendar Tab */}
